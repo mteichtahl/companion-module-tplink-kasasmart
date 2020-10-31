@@ -1,15 +1,37 @@
-var instance_skel = require('../../instance_skel');
-const { Client } = require('tplink-smarthome-api');
+var instance_skel = require('../../../instance_skel');
+import {
+    // CompanionFeedbackEvent,
+    // CompanionFeedbackResult,
+    CompanionSystem,
+    // CompanionInputField,
+    // CompanionActionEvent,
+    CompanionActions,
+    SomeCompanionConfigField
+} from '../../../instance_skel_types';
+
+import { Client as KasaClient, Device as KasaDevice } from 'tplink-smarthome-api';
 const _ = require('lodash')
 
-const ACTIONS = {
-    ON_ACTION: 'ON_ACTION',
-    OFF_ACTION: 'OFF_ACTION'
+// const ACTIONS = {
+//     ON_ACTION: 'ON_ACTION',
+//     OFF_ACTION: 'OFF_ACTION'
+// }
+
+
+export enum ACTIONS {
+    ON_ACTION = 'ON_ACTION',
+    OFF_ACTION = 'OFF_ACTION'
 }
+
+export interface KasaDevices {
+    [id: string]: KasaDevice
+}
+
+
 
 class instance extends instance_skel {
 
-    constructor(system, id, config) {
+    constructor(system: CompanionSystem, id: string, config) {
         super(system, id, config);
 
         var self = this;
@@ -39,9 +61,9 @@ class instance extends instance_skel {
 
     }
 
-    config_fields() {
+    config_fields(): SomeCompanionConfigField[] {
         var self = this;
-        let fields = []
+        let fields: SomeCompanionConfigField[] = []
 
         _(self._devices).forEach(device => {
             fields.push(
@@ -72,9 +94,9 @@ class instance extends instance_skel {
     actions() {
         var self = this;
 
-        const defaultDeviceId = Object.keys(self._devices)[0];
+        const defaultDeviceId: string = Object.keys(self._devices)[0];
 
-        var actions = {
+        var actions: CompanionActions = {
             'ON_ACTION': {
                 label: 'Turn a device on',
                 options: [
@@ -82,9 +104,8 @@ class instance extends instance_skel {
                         type: 'dropdown',
                         label: 'Device',
                         id: 'deviceId',
-                        required: true,
                         default: defaultDeviceId,
-                        choices: _(self._devices).map(device => {
+                        choices: _(self._devices).map((device: KasaDevice) => {
                             return { id: device.id, label: device.alias }
                         }).value()
                     }
@@ -97,9 +118,8 @@ class instance extends instance_skel {
                         type: 'dropdown',
                         label: 'Device',
                         id: 'deviceId',
-                        required: true,
                         default: defaultDeviceId,
-                        choices: _(self._devices).map(device => {
+                        choices: _(self._devices).map((device: KasaDevice) => {
                             return { id: device.id, label: device.alias }
                         }).value()
                     }
@@ -109,7 +129,7 @@ class instance extends instance_skel {
         self.setActions(actions)
     }
 
-    action(action) {
+    action(action): void {
         var self = this;
 
         switch (action.action) {
@@ -124,28 +144,29 @@ class instance extends instance_skel {
         }
     }
 
-    destroy() {
-        var self = this;
+    destroy(): void {
+        // var self = this;
 
         // self._client.stopDiscovery();
 
     }
 
-    _discoverDevices() {
+    _discoverDevices(): Promise<void | KasaDevices> {
         var self = this;
 
-        self._client = new Client();
+        self._client = new KasaClient();
         self.status(self.STATUS_WARN, "Discovering Devices");
+
         const discoveryOptions = {
             discoveryTimeout: 3000
         }
 
-        let devices = {};
+        let devices: KasaDevices = {};
 
         return new Promise((resolve, reject) => {
 
             self._client.startDiscovery(discoveryOptions)
-                .on('device-new', (device) => {
+                .on('device-new', (device: KasaDevice) => {
                     devices[device.id] = device
                 })
                 .on('discovery-invalid', (e) => {
@@ -157,8 +178,6 @@ class instance extends instance_skel {
                 resolve(devices)
             }, discoveryOptions.discoveryTimeout + 100)
         })
-
-
     }
 
 }

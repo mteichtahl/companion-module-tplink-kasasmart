@@ -2,7 +2,7 @@
 
 A light weight module for providing automated discovery of TP-Link Kasa Smarthome devices.
 
-### Supported Devices
+### Device Testing
 
 [ ] HS100 Plug
 [ ] HS103 Plug
